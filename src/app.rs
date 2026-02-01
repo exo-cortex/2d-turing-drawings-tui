@@ -21,7 +21,7 @@ impl Default for App {
         Self {
             running: true,
             turing_machine_running: false,
-            turing_machine: TuringMachineInstance::new(123),
+            turing_machine: TuringMachineInstance::new(54321),
             events: EventHandler::new(),
         }
     }
