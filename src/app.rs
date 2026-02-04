@@ -56,7 +56,7 @@ impl App {
             Event::Tick => self.tick(),
             Event::Crossterm(event) => match event {
                 crossterm::event::Event::Resize(columns, rows) => {
-                    self.tm.resize_memory(rows, columns - RULE_PANE_WIDTH);
+                    self.tm.resize_memory(rows - 5, columns - RULE_PANE_WIDTH);
                 }
                 crossterm::event::Event::Key(key_event)
                     if key_event.kind == crossterm::event::KeyEventKind::Press =>

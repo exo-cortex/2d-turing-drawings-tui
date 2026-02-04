@@ -12,29 +12,23 @@ impl Widget for &App {
         Self: Sized,
     {
         let layout = Layout::vertical(vec![
-            Constraint::Length(1),
-            Constraint::Length(2),
+            Constraint::Length(4),
             Constraint::Min(10),
             Constraint::Length(1),
         ])
         .split(area);
 
-        Paragraph::new("2D Turing Maching:")
-            .fg(Color::Black)
-            .bg(Color::Gray)
-            .render(layout[0], buf);
         Paragraph::new(
-            "Usage: left/right -> double/halve speed, Ctrl+R: randomize rules,\n
-            Backspace: Reset memory, M: Mutate rules",
+            "2d Turing Machine - Usage:\nleft/right -> decrease/increase speed\nBackspace: Reset memory\nM: Mutate rules, R: randomize rules",
         )
         .bg(Color::DarkGray)
-        .render(layout[1], buf);
+        .render(layout[0], buf);
 
         let machine_layout = Layout::horizontal(vec![
             Constraint::Min(15),
             Constraint::Length(RULE_PANE_WIDTH),
         ])
-        .split(layout[2]);
+        .split(layout[1]);
 
         self.tm.get_memory().render(machine_layout[0], buf);
         self.tm.rule_set.render(machine_layout[1], buf);
