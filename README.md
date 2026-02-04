@@ -11,8 +11,15 @@ This uses Ratatui and was made using the event-driven template.
 Make sure you have Rust installed on your system. 
 Run the program with 
 ```sh
-$ cargo run 
+$ cargo run --release
 ```
+
+# Usage / Controls
+- left/right arrow keys: decrease/increase speed
+- P - play/pause
+- M - Mutate ruleset
+- R - Randomixe ruleset
+
 controlling the program/hotkeys:
 - P - toggle play/pause
 - left/right - increase/decrease speed

@@ -1,4 +1,5 @@
 use ratatui::{
+    buffer::Buffer,
     layout::{Constraint, Layout},
     style::{Color, Stylize},
     text::{Line, Span},
@@ -12,7 +13,12 @@ use crate::{
 
 use {rand::Rng, std::fmt::Display};
 
-const N_DIRECTIONS: u8 = 4;
+#[derive(Debug, Clone, Copy)]
+struct RuleInput(State, Symbol);
+#[derive(Debug, Clone, Copy)]
+pub struct RuleOutput(pub State, pub Symbol, pub HeadDirection);
+#[derive(Debug, Clone, Copy)]
+struct Rule(RuleInput, RuleOutput);
 
 #[derive(Debug, Default, Copy, Clone)]
 pub enum HeadDirection {
@@ -56,17 +62,17 @@ impl Display for HeadDirection {
 
 #[derive(Default, Debug)]
 pub struct RuleSet<const N_STATES: usize, const N_SYMBOLS: usize> {
-    pub rules: Vec<((State, Symbol), (State, Symbol, HeadDirection))>,
+    rules: Vec<Rule>,
 }
 
 impl<const N_STATES: usize, const N_SYMBOLS: usize> RuleSet<N_STATES, N_SYMBOLS> {
     pub fn new() -> Self {
-        let ruleset = (0..N_STATES as u8)
+        let ruleset = (0..N_STATES as State)
             .flat_map(move |st| {
-                (0..N_SYMBOLS as u8).map(move |sy| {
-                    (
-                        (st, sy),
-                        (
+                (0..N_SYMBOLS as State).map(move |sy| {
+                    Rule(
+                        RuleInput(st, sy),
+                        RuleOutput(
                             State::default(),
                             Symbol::default(),
                             HeadDirection::default(),
@@ -74,25 +80,24 @@ impl<const N_STATES: usize, const N_SYMBOLS: usize> RuleSet<N_STATES, N_SYMBOLS>
                     )
                 })
             })
-            .collect::<Vec<((u8, u8), (u8, u8, HeadDirection))>>();
+            .collect::<Vec<Rule>>();
         RuleSet { rules: ruleset }
     }
 
     pub fn random(rng: &mut impl Rng) -> Self {
         let ruleset = (0..N_STATES as u8)
             .flat_map(move |st| (0..N_SYMBOLS as u8).map(move |sy| (st, sy)))
-            .into_iter()
             .map(|(st, sy)| {
-                (
-                    (st, sy),
-                    (
+                Rule(
+                    RuleInput(st, sy),
+                    RuleOutput(
                         rng.random_range(0..N_STATES as u8),
                         rng.random_range(0..N_SYMBOLS as u8),
                         HeadDirection::from_byte(rng.random_range(0..4)),
                     ),
                 )
             })
-            .collect::<Vec<((u8, u8), (u8, u8, HeadDirection))>>();
+            .collect::<Vec<Rule>>();
         RuleSet { rules: ruleset }
     }
 
@@ -119,50 +124,13 @@ impl<const N_STATES: usize, const N_SYMBOLS: usize> RuleSet<N_STATES, N_SYMBOLS>
         }
     }
 
-    pub fn _get_instructions(
-        &self,
-        in_state: &State,
-        in_symbol: &Symbol,
-    ) -> &(State, Symbol, HeadDirection) {
-        &self
-            .rules
-            .iter()
-            .find(|rule| rule.0 == (*in_state, *in_symbol))
-            .unwrap()
-            .1
-    }
-
-    pub fn get_instruction(
-        &self,
-        in_state: State,
-        in_symbol: Symbol,
-    ) -> &(State, Symbol, HeadDirection) {
+    pub fn get_instruction(&self, in_state: State, in_symbol: Symbol) -> &RuleOutput {
         &self.rules[(in_state as usize) * N_SYMBOLS + in_symbol as usize].1
     }
 }
 
-impl<const N_STATES: usize, const N_SYMBOLS: usize> Display for RuleSet<N_STATES, N_SYMBOLS> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(
-            f,
-            "ruleset for Turing machine with {} states and {} symbols",
-            N_STATES, N_SYMBOLS,
-        )
-        .unwrap();
-        self.rules.iter().for_each(|&rule| {
-            writeln!(
-                f,
-                "[{}, {}] -> [{}, {}, {}]",
-                rule.0.0, rule.0.1, rule.1.0, rule.1.1, rule.1.2
-            )
-            .unwrap();
-        });
-        Ok(())
-    }
-}
-
 impl<const N_STATES: usize, const N_SYMBOLS: usize> Widget for &RuleSet<N_STATES, N_SYMBOLS> {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut Buffer)
     where
         Self: Sized,
     {
@@ -173,14 +141,6 @@ impl<const N_STATES: usize, const N_SYMBOLS: usize> Widget for &RuleSet<N_STATES
             .bg(Color::LightRed)
             .render(layout[0], buf);
 
-        // layout
-        //     .iter()
-        //     .zip(self.rules.iter())
-        //     .enumerate()
-        //     .for_each(|(idx, (l, r))| {
-        //         rule_display(idx, *r).left_aligned().render(*l, buf);
-        //     });
-
         let list_of_rules = self
             .rules
             .iter()
@@ -189,12 +149,10 @@ impl<const N_STATES: usize, const N_SYMBOLS: usize> Widget for &RuleSet<N_STATES
             .collect::<Vec<Line>>();
 
         Paragraph::new(list_of_rules).render(layout[1], buf);
-        // .render(*l, buf);
-        // });
     }
 }
 
-fn rule_display<'a>(idx: usize, rule: ((u8, u8), (u8, u8, HeadDirection))) -> Line<'a> {
+fn rule_display<'a>(idx: usize, rule: Rule) -> Line<'a> {
     let input_state = Span::raw(format!("{}", rule.0.0));
     let input_symbol = symbol_style(rule.0.1);
 

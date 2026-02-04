@@ -6,7 +6,6 @@ pub mod event;
 mod memory;
 mod ruleset;
 mod tm;
-mod turing_machine;
 pub mod ui;
 
 fn main() -> color_eyre::Result<()> {

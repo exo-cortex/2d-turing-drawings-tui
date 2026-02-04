@@ -33,20 +33,13 @@ pub enum Event {
 /// You can extend this enum with your own custom events.
 #[derive(Clone, Debug)]
 pub enum AppEvent {
-    /// Increment the counter.
-    Increment,
-    /// Decrement the counter.
-    Decrement,
-    /// Quit the application.
+    Resize(u16, u16),
     Quit,
 }
 
-/// Terminal event handler.
 #[derive(Debug)]
 pub struct EventHandler {
-    /// Event sender channel.
     sender: mpsc::Sender<Event>,
-    /// Event receiver channel.
     receiver: mpsc::Receiver<Event>,
 }
 
@@ -83,14 +76,11 @@ impl EventHandler {
     }
 }
 
-/// A thread that handles reading crossterm events and emitting tick events on a regular schedule.
 struct EventThread {
-    /// Event sender channel.
     sender: mpsc::Sender<Event>,
 }
 
 impl EventThread {
-    /// Constructs a new instance of [`EventThread`].
     fn new(sender: mpsc::Sender<Event>) -> Self {
         Self { sender }
     }

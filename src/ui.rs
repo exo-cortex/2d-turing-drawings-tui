@@ -4,7 +4,7 @@ use ratatui::{
     widgets::{Paragraph, Widget},
 };
 
-use crate::{app::App, turing_machine::COLUMNS};
+use crate::app::{App, RULE_PANE_WIDTH};
 
 impl Widget for &App {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
@@ -30,14 +30,13 @@ impl Widget for &App {
         .bg(Color::DarkGray)
         .render(layout[1], buf);
 
-        let machine_layout =
-            Layout::horizontal(vec![Constraint::Min(COLUMNS as u16), Constraint::Min(30)])
-                .split(layout[2]);
+        let machine_layout = Layout::horizontal(vec![
+            Constraint::Min(15),
+            Constraint::Length(RULE_PANE_WIDTH),
+        ])
+        .split(layout[2]);
 
-        self.turing_machine.render(machine_layout[0], buf);
-        self.turing_machine
-            .tm
-            .rule_set
-            .render(machine_layout[1], buf);
+        self.tm.get_memory().render(machine_layout[0], buf);
+        self.tm.rule_set.render(machine_layout[1], buf);
     }
 }

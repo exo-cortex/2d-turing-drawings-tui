@@ -1,27 +1,36 @@
 use crate::{
     event::{AppEvent, Event, EventHandler},
-    turing_machine::TuringMachineInstance,
+    tm::TuringMachine,
 };
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 use ratatui::{
     DefaultTerminal,
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
 };
+
+pub const RULE_PANE_WIDTH: u16 = 25;
+
+const N_STATES: usize = 4;
+const N_SYMBOLS: usize = 4;
 
 /// Application.
 #[derive(Debug)]
 pub struct App {
     pub running: bool,
     pub turing_machine_running: bool,
-    pub turing_machine: TuringMachineInstance,
+    rng: SmallRng,
+    pub tm: TuringMachine<N_STATES, N_SYMBOLS>,
     pub events: EventHandler,
 }
 
 impl Default for App {
     fn default() -> Self {
+        let mut rng = SmallRng::seed_from_u64(1234);
         Self {
             running: true,
-            turing_machine_running: false,
-            turing_machine: TuringMachineInstance::new(54321),
+            turing_machine_running: true,
+            rng: SmallRng::seed_from_u64(rng.random_range(0..=u64::MAX)),
+            tm: TuringMachine::new(16, 32, &mut rng),
             events: EventHandler::new(),
         }
     }
@@ -46,7 +55,9 @@ impl App {
         match self.events.next()? {
             Event::Tick => self.tick(),
             Event::Crossterm(event) => match event {
-                // crossterm::event::Event::Resize(columns, rows) => {}
+                crossterm::event::Event::Resize(columns, rows) => {
+                    self.tm.resize_memory(rows, columns - RULE_PANE_WIDTH);
+                }
                 crossterm::event::Event::Key(key_event)
                     if key_event.kind == crossterm::event::KeyEventKind::Press =>
                 {
@@ -66,15 +77,13 @@ impl App {
         match (key_event.modifiers, key_event.code) {
             (_, KeyCode::Esc | KeyCode::Char('q'))
             | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => self.quit(),
-            (_, KeyCode::Char('R') | KeyCode::Char('r')) => self.turing_machine.randomize_ruleset(),
-            (_, KeyCode::Char('M') | KeyCode::Char('m')) => self.turing_machine.mutate_ruleset(),
-            (_, KeyCode::Right) => self
-                .turing_machine
-                .change_speed(crate::turing_machine::SpeedUpdate::Increase),
-            (_, KeyCode::Left) => self
-                .turing_machine
-                .change_speed(crate::turing_machine::SpeedUpdate::Decrease),
-            (_, KeyCode::Backspace) => self.turing_machine.reset_memory(),
+            (_, KeyCode::Char('R') | KeyCode::Char('r')) => {
+                self.tm.randomize_ruleset(&mut self.rng)
+            }
+            (_, KeyCode::Char('M') | KeyCode::Char('m')) => self.tm.mutate_ruleset(&mut self.rng),
+            (_, KeyCode::Right) => self.tm.double_speed(),
+            (_, KeyCode::Left) => self.tm.halve_speed(),
+            (_, KeyCode::Backspace) => self.tm.reset_memory(),
             (_, KeyCode::Char('p') | KeyCode::Char('P')) => {
                 self.turing_machine_running = !self.turing_machine_running
             }
@@ -85,7 +94,7 @@ impl App {
 
     pub fn tick(&mut self) {
         if self.turing_machine_running {
-            self.turing_machine.update();
+            self.tm.update();
         }
     }
 
