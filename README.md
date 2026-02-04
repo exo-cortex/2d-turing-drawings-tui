@@ -15,10 +15,11 @@ $ cargo run --release
 ```
 
 # Usage / Controls
-- left/right arrow keys: decrease/increase speed
+- [left/right arrow keys]: decrease/increase speed
 - P - play/pause
 - M - Mutate ruleset
 - R - Randomixe ruleset
+- [Backspace] - clear memory
 
 controlling the program/hotkeys:
 - P - toggle play/pause

@@ -11,7 +11,7 @@ use ratatui::{
 pub const RULE_PANE_WIDTH: u16 = 25;
 
 const N_STATES: usize = 4;
-const N_SYMBOLS: usize = 4;
+const N_SYMBOLS: usize = 8;
 
 /// Application.
 #[derive(Debug)]

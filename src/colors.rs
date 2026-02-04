@@ -13,6 +13,8 @@ pub fn symbol_style<'a>(symbol: u8) -> Span<'a> {
         5 => Span::styled("*", Style::new().fg(Color::LightRed).bg(Color::Black)),
         6 => Span::styled(";", Style::new().fg(Color::Black).bg(Color::LightRed)),
         7 => Span::styled("%", Style::new().fg(Color::Yellow).bg(Color::DarkGray)),
-        _ => Span::styled("@", Style::new().bg(Color::Blue)),
+        8 => Span::styled("-", Style::new().fg(Color::Black).bg(Color::Yellow)),
+        9 => Span::styled("$", Style::new().fg(Color::Blue).bg(Color::DarkGray)),
+        _ => Span::styled("@", Style::new().fg(Color::Red).bg(Color::Blue)),
     }
 }
